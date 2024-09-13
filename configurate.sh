@@ -1,0 +1,1 @@
+./configure --enable-kbuild=no --enable-dkms=no --enable-dkms-build=no
