@@ -75,8 +75,8 @@ PyMODINIT_FUNC initach_py(void);
 static PyObject *ach_py_error;
 
 static ach_channel_t *parse_channel_pointer( PyObject *i ) {
-    if( PyInt_Check(i) ) {
-        return (ach_channel_t*)PyInt_AsLong(i);
+    if( PySet_Check(i) ) {
+        return (ach_channel_t*)PyLong_AsLong(i);
     } else if ( PyLong_Check(i) ) {
         return (ach_channel_t*)PyLong_AsVoidPtr(i);
     } else {
@@ -161,7 +161,7 @@ result_string( PyObject *self, PyObject *args ) {
     if( !PyArg_ParseTuple(args, "i", &r ) ) {
         return NULL;
     }
-    return PyString_FromString( ach_result_to_string((enum ach_status)r) );
+    return PyLong_FromString( ach_result_to_string((enum ach_status)r), NULL, 10);
 }
 
 static PyObject *
@@ -376,44 +376,51 @@ static PyMethodDef module_methods[] = {
    { NULL, NULL, 0, NULL }
 };
 
+static struct PyModuleDef ach_module = {
+    PyModuleDef_HEAD_INIT,
+    "ach_py",       /* name of the module */
+    "Python extension module for the Ach IPC Library",  /* module documentation */
+    -1,             /* size of per-interpreter state of the module, or -1 if the module keeps state in global variables */
+    module_methods  /* the methods array */
+};
 
-PyMODINIT_FUNC initach_py() {
+PyMODINIT_FUNC PyInit_ach_py(void) {
     PyObject *m;
 
-    // methods
-    m = Py_InitModule3("ach_py", module_methods, "Python extension module for the Ach IPC Library");
-    if( NULL == m ) {
-        return;
+    // Create the module
+    m = PyModule_Create(&ach_module);
+    if (m == NULL) {
+        return NULL;
     }
 
     // error object
-    static char errname[] =  "ach_py.AchException";
-    ach_py_error = PyErr_NewException( errname, NULL, NULL);
-    Py_INCREF( ach_py_error ); // Reference counts?  Get with the program python!
+    static char errname[] = "ach_py.AchException";
+    ach_py_error = PyErr_NewException(errname, NULL, NULL);
+    Py_INCREF(ach_py_error);
     PyModule_AddObject(m, "AchException", ach_py_error);
 
     // keyword/const objects
-    PyModule_AddObject( m, "ACH_OK",               PyInt_FromLong( ACH_OK ) );
-    PyModule_AddObject( m, "ACH_OVERFLOW",         PyInt_FromLong( ACH_OVERFLOW ) );
-    PyModule_AddObject( m, "ACH_INVALID_NAME",     PyInt_FromLong( ACH_INVALID_NAME ) );
-    PyModule_AddObject( m, "ACH_BAD_SHM_FILE",     PyInt_FromLong( ACH_BAD_SHM_FILE ) );
-    PyModule_AddObject( m, "ACH_FAILED_SYSCALL",   PyInt_FromLong( ACH_FAILED_SYSCALL ) );
-    PyModule_AddObject( m, "ACH_STALE_FRAMES",     PyInt_FromLong( ACH_STALE_FRAMES ) );
-    PyModule_AddObject( m, "ACH_EAGAIN"      ,     PyInt_FromLong( ACH_EAGAIN ) );
-    PyModule_AddObject( m, "ACH_LOCKED"      ,     PyInt_FromLong( ACH_LOCKED ) );
-    PyModule_AddObject( m, "ACH_MISSED_FRAME",     PyInt_FromLong( ACH_MISSED_FRAME ) );
-    PyModule_AddObject( m, "ACH_TIMEOUT",          PyInt_FromLong( ACH_TIMEOUT ) );
-    PyModule_AddObject( m, "ACH_EEXIST",           PyInt_FromLong( ACH_EEXIST ) );
-    PyModule_AddObject( m, "ACH_ENOENT",           PyInt_FromLong( ACH_ENOENT ) );
-    PyModule_AddObject( m, "ACH_CLOSED",           PyInt_FromLong( ACH_CLOSED ) );
-    PyModule_AddObject( m, "ACH_BUG",              PyInt_FromLong( ACH_BUG ) );
-    PyModule_AddObject( m, "ACH_EINVAL",           PyInt_FromLong( ACH_EINVAL ) );
-    PyModule_AddObject( m, "ACH_CORRUPT",          PyInt_FromLong( ACH_CORRUPT ) );
-    PyModule_AddObject( m, "ACH_CANCELED",         PyInt_FromLong( ACH_CANCELED ) );
-    PyModule_AddObject( m, "ACH_BAD_HEADER",       PyInt_FromLong( ACH_BAD_HEADER ) );
-    PyModule_AddObject( m, "ACH_EACCES",           PyInt_FromLong( ACH_EACCES ) );
-    PyModule_AddObject( m, "ACH_O_WAIT",           PyInt_FromLong( ACH_O_WAIT ) );
-    PyModule_AddObject( m, "ACH_O_LAST",           PyInt_FromLong( ACH_O_LAST ) );
-    /* PyModule_AddObject( m, "ACH_DEFAULT_FRAME_SIZE",   PyInt_FromLong( ACH_DEFAULT_FRAME_SIZE ) ); */
-    /* PyModule_AddObject( m, "ACH_DEFAULT_FRAME_COUNT",  PyInt_FromLong( ACH_DEFAULT_FRAME_COUNT ) ); */
+    PyModule_AddObject(m, "ACH_OK", PyLong_FromLong(ACH_OK));
+    PyModule_AddObject(m, "ACH_OVERFLOW", PyLong_FromLong(ACH_OVERFLOW));
+    PyModule_AddObject(m, "ACH_INVALID_NAME", PyLong_FromLong(ACH_INVALID_NAME));
+    PyModule_AddObject(m, "ACH_BAD_SHM_FILE", PyLong_FromLong(ACH_BAD_SHM_FILE));
+    PyModule_AddObject(m, "ACH_FAILED_SYSCALL", PyLong_FromLong(ACH_FAILED_SYSCALL));
+    PyModule_AddObject(m, "ACH_STALE_FRAMES", PyLong_FromLong(ACH_STALE_FRAMES));
+    PyModule_AddObject(m, "ACH_EAGAIN", PyLong_FromLong(ACH_EAGAIN));
+    PyModule_AddObject(m, "ACH_LOCKED", PyLong_FromLong(ACH_LOCKED));
+    PyModule_AddObject(m, "ACH_MISSED_FRAME", PyLong_FromLong(ACH_MISSED_FRAME));
+    PyModule_AddObject(m, "ACH_TIMEOUT", PyLong_FromLong(ACH_TIMEOUT));
+    PyModule_AddObject(m, "ACH_EEXIST", PyLong_FromLong(ACH_EEXIST));
+    PyModule_AddObject(m, "ACH_ENOENT", PyLong_FromLong(ACH_ENOENT));
+    PyModule_AddObject(m, "ACH_CLOSED", PyLong_FromLong(ACH_CLOSED));
+    PyModule_AddObject(m, "ACH_BUG", PyLong_FromLong(ACH_BUG));
+    PyModule_AddObject(m, "ACH_EINVAL", PyLong_FromLong(ACH_EINVAL));
+    PyModule_AddObject(m, "ACH_CORRUPT", PyLong_FromLong(ACH_CORRUPT));
+    PyModule_AddObject(m, "ACH_CANCELED", PyLong_FromLong(ACH_CANCELED));
+    PyModule_AddObject(m, "ACH_BAD_HEADER", PyLong_FromLong(ACH_BAD_HEADER));
+    PyModule_AddObject(m, "ACH_EACCES", PyLong_FromLong(ACH_EACCES));
+    PyModule_AddObject(m, "ACH_O_WAIT", PyLong_FromLong(ACH_O_WAIT));
+    PyModule_AddObject(m, "ACH_O_LAST", PyLong_FromLong(ACH_O_LAST));
+
+    return m;  // Return the created module
 }

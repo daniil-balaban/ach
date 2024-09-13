@@ -59,7 +59,7 @@ static int *csock;
 static int *fd;
 static struct sockaddr_in *addr;
 static struct sockaddr_in *caddr;
-unsigned clen;
+extern unsigned clen;
 
 
 static void s_init(void) {
