@@ -74,38 +74,36 @@ PyMODINIT_FUNC initach_py(void);
 
 static PyObject *ach_py_error;
 
-static ach_channel_t *parse_channel_pointer( PyObject *i ) {
-    if( PySet_Check(i) ) {
+static ach_channel_t *parse_channel_pointer(PyObject *i) {
+    if(PySet_Check(i)) {
         return (ach_channel_t*)PyLong_AsLong(i);
     } else if ( PyLong_Check(i) ) {
         return (ach_channel_t*)PyLong_AsVoidPtr(i);
     } else {
-        PyErr_SetString( PyExc_TypeError, "invalid channel pointer" );
+        PyErr_SetString(PyExc_TypeError, "invalid channel pointer");
         return NULL;
     }
 }
 
-static PyObject  *raise_error( ach_status_t r ) {
-    PyErr_SetString( ach_py_error, ach_result_to_string(r) );
+static PyObject  *raise_error(ach_status_t r) {
+    PyErr_SetString(ach_py_error, ach_result_to_string(r));
     return NULL;
 }
 
-static PyObject *
-ach_error( PyObject *self, PyObject *args ) {
+static PyObject *ach_error(PyObject *self, PyObject *args) {
     (void)self;
     int r;
-    if( !PyArg_ParseTuple(args, "i", &r ) ) {
+    if(!PyArg_ParseTuple(args, "i", &r )) {
         return NULL;
     }
     return raise_error((ach_status_t)r);
 }
 
-static PyObject *
-open_channel( PyObject *self, PyObject *args ) {
+static PyObject *open_channel(PyObject *self, PyObject *args) {
     (void)self;
     const char *name = NULL;
     long frame_count = 0, frame_size = 0;
-    if( !PyArg_ParseTuple(args, "sll", &name, &frame_count, &frame_size ) ) {
+    if(!PyArg_ParseTuple(args, "sll", &name, &frame_count, &frame_size)) {
         return NULL;
     }
     /* Alloc struct */
@@ -115,23 +113,22 @@ open_channel( PyObject *self, PyObject *args ) {
     ach_status_t r = ach_open(c, name, NULL);
 
     /* Create channel if necessary */
-    if( ACH_ENOENT == r ) {
-        r = ach_create( name, (size_t)frame_count, (size_t)frame_size, NULL );
-        if( ach_status_match(r, ACH_MASK_OK | ACH_MASK_EEXIST) ) {
+    if(ACH_ENOENT == r) {
+        r = ach_create(name, (size_t)frame_count, (size_t)frame_size, NULL);
+        if( ach_status_match(r, ACH_MASK_OK | ACH_MASK_EEXIST)) {
             r = ach_open(c, name, NULL);
         }
     }
 
     /* Check result */
-    if( ACH_OK != r ) {
+    if(ACH_OK != r) {
         return raise_error(r);
     }
 
     return PyLong_FromVoidPtr(c);
 }
 
-static PyObject *
-close_channel( PyObject *self, PyObject *args ) {
+static PyObject *close_channel(PyObject *self, PyObject *args) {
     (void)self;
 
     PyObject *py_chan;
@@ -140,12 +137,12 @@ close_channel( PyObject *self, PyObject *args ) {
     }
 
     ach_channel_t *c = parse_channel_pointer(py_chan);
-    if( NULL == c ) {
+    if(NULL == c) {
         return NULL;
     }
 
     ach_status_t r = ach_close(c);
-    if( ACH_OK != r ) {
+    if(ACH_OK != r) {
         return raise_error(r);
     }
 
@@ -154,18 +151,16 @@ close_channel( PyObject *self, PyObject *args ) {
     Py_RETURN_NONE;
 }
 
-static PyObject *
-result_string( PyObject *self, PyObject *args ) {
+static PyObject *result_string(PyObject *self, PyObject *args) {
     (void)self;
     int r;
-    if( !PyArg_ParseTuple(args, "i", &r ) ) {
+    if(!PyArg_ParseTuple(args, "i", &r )) {
         return NULL;
     }
-    return PyLong_FromString( ach_result_to_string((enum ach_status)r), NULL, 10);
+    return PyLong_FromString(ach_result_to_string((enum ach_status)r), NULL, 10);
 }
 
-static PyObject *
-put_buf( PyObject *self, PyObject *args ) {
+static PyObject *put_buf( PyObject *self, PyObject *args ) {
     (void)self;
 
     PyObject *py_chan, *b;
@@ -176,12 +171,12 @@ put_buf( PyObject *self, PyObject *args ) {
 
     // parse channel
     ach_channel_t *c = parse_channel_pointer(py_chan);
-    if( NULL == c ) {
+    if(NULL == c) {
         return NULL;
     }
 
     // parse buffer
-    if( ! PyObject_CheckBuffer(b) ) {
+    if( !PyObject_CheckBuffer(b) ) {
         PyErr_SetString( PyExc_TypeError, "invalid buffer" );
         return NULL;
     }
@@ -207,32 +202,31 @@ put_buf( PyObject *self, PyObject *args ) {
     Py_RETURN_NONE;
 }
 
-static PyObject *
-get_buf( PyObject *self, PyObject *args ) {
+static PyObject *get_buf(PyObject *self, PyObject *args) {
     (void)self;
 
     PyObject *py_chan, *b;
     int wait, last;
     // get arg objects
-    if( !PyArg_ParseTuple(args, "OOii", &py_chan, &b, &wait, &last) ) {
+    if( !PyArg_ParseTuple(args, "OOii", &py_chan, &b, &wait, &last)) {
         return NULL;
     }
 
     // parse channel
     ach_channel_t *c = parse_channel_pointer(py_chan);
-    if( NULL == c ) {
+    if(NULL == c) {
         return NULL;
     }
 
     // parse buffer
-    if( ! PyObject_CheckBuffer(b) ) {
+    if(!PyObject_CheckBuffer(b)) {
         PyErr_SetString( PyExc_TypeError, "invalid buffer" );
         return NULL;
     }
 
     // view buffer
     Py_buffer buf;
-    if( PyObject_GetBuffer( b, &buf, PyBUF_WRITABLE ) ) {
+    if(PyObject_GetBuffer( b, &buf, PyBUF_WRITABLE) ) {
         PyErr_SetString( PyExc_BufferError, "couldn't view writable buffer" );
         return NULL;
     }
@@ -244,8 +238,8 @@ get_buf( PyObject *self, PyObject *args ) {
 
     // make the damn call
     size_t frame_size;
-    ach_status_t r = ach_get( c, buf.buf, (size_t)buf.len,
-                              &frame_size, NULL, opts );
+    ach_status_t r = ach_get(c, buf.buf, (size_t)buf.len,
+                              &frame_size, NULL, opts);
     // cleanup
     PyBuffer_Release(&buf);
 
@@ -280,27 +274,26 @@ get_buf( PyObject *self, PyObject *args ) {
 
 }
 
-static PyObject *
-flush_channel( PyObject *self, PyObject *args ) {
+static PyObject *flush_channel(PyObject *self, PyObject *args) {
     (void)self;
 
     PyObject *py_chan;
     // get arg objects
-    if( !PyArg_ParseTuple(args, "O", &py_chan) ) {
+    if(!PyArg_ParseTuple(args, "O", &py_chan)) {
         return NULL;
     }
 
     // parse channel
     ach_channel_t *c = parse_channel_pointer(py_chan);
-    if( NULL == c ) {
+    if(NULL == c) {
         return NULL;
     }
 
     // make the damn call
-    ach_status_t r = ach_flush( c );
+    ach_status_t r = ach_flush(c);
 
     // check the result
-    if( ACH_OK != r ) {
+    if(ACH_OK != r) {
         PyErr_SetString( ach_py_error, ach_result_to_string(r) );
         return NULL;
     }
@@ -309,29 +302,28 @@ flush_channel( PyObject *self, PyObject *args ) {
     Py_RETURN_NONE;
 }
 
-static PyObject *
-chmod_channel( PyObject *self, PyObject *args ) {
+static PyObject *chmod_channel(PyObject *self, PyObject *args) {
     (void)self;
 
     PyObject *py_chan;
     int mode;
     // get arg objects
-    if( !PyArg_ParseTuple(args, "Oi", &py_chan, &mode) ) {
+    if(!PyArg_ParseTuple(args, "Oi", &py_chan, &mode)) {
         return NULL;
     }
 
     // parse channel
     ach_channel_t *c = parse_channel_pointer(py_chan);
-    if( NULL == c ) {
+    if(NULL == c) {
         return NULL;
     }
 
     // make the damn call
-    ach_status_t r = ach_chmod( c, (mode_t)mode );
+    ach_status_t r = ach_chmod(c, (mode_t)mode);
 
     // check the result
-    if( ACH_OK != r ) {
-        PyErr_SetString( ach_py_error, ach_result_to_string(r) );
+    if(ACH_OK != r) {
+        PyErr_SetString(ach_py_error, ach_result_to_string(r));
         return NULL;
     }
 
@@ -340,12 +332,12 @@ chmod_channel( PyObject *self, PyObject *args ) {
 }
 
 static PyObject *
-unlink_channel( PyObject *self, PyObject *args ) {
+unlink_channel(PyObject *self, PyObject *args) {
     (void)self;
 
     const char *name;
     // get arg objects
-    if( !PyArg_ParseTuple(args, "s", &name) )  {
+    if(!PyArg_ParseTuple(args, "s", &name))  {
         return NULL;
     }
 
@@ -353,8 +345,8 @@ unlink_channel( PyObject *self, PyObject *args ) {
     ach_status_t r = ach_unlink( name );
 
     // check the result
-    if( ACH_OK != r ) {
-        PyErr_SetString( ach_py_error, ach_result_to_string(r) );
+    if(ACH_OK != r) {
+        PyErr_SetString(ach_py_error, ach_result_to_string(r));
         return NULL;
     }
 
